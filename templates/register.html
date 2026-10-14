@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - EvenUp{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <div class="glass-card auth-card">
+    <div class="auth-logo">
+      <img
+        class="auth-brand-mark"
+        width="88"
+        height="88"
+        src="{{ url_for('static', filename='assets/evenup-logo-v5.png', v='6') }}"
+        alt="EvenUp logo"
+        onerror="this.style.display='none'; this.nextElementSibling.classList.add('logo-fallback-visible')"
+      />
+      <div class="logo-fallback" aria-hidden="true">E</div>
+      <h1>EVENUP</h1>
+      <p>Split Fairly. Settle Instantly.</p>
+    </div>
+
+    <div class="auth-title">
+      <h2>Create Account</h2>
+      <p>Join EvenUp today</p>
+    </div>
+
+    <form method="POST" class="auth-form">
+      <div class="floating-group">
+        <label for="register-name">Full name</label>
+        <input id="register-name" type="text" name="name" class="floating-input" placeholder="Your full name" autocomplete="name" minlength="2" required />
+      </div>
+
+      <div class="floating-group">
+        <label for="register-handle">EvenUp ID</label>
+        <input id="register-handle" type="text" name="handle" class="floating-input" placeholder="e.g. pratik_01" autocomplete="username" minlength="3" maxlength="30" required />
+      </div>
+
+      <div class="floating-group">
+        <label for="register-email">Email address</label>
+        <input id="register-email" type="email" name="email" class="floating-input" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+
+      <div class="floating-group">
+        <label for="register-password">Password</label>
+        <input id="register-password" type="password" name="password" class="floating-input" placeholder="At least 6 characters" autocomplete="new-password" minlength="6" required />
+      </div>
+
+      <div class="floating-group">
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" type="password" name="confirm_password" class="floating-input" placeholder="Repeat your password" autocomplete="new-password" required />
+        <small id="passwordMessage" class="password-message"></small>
+      </div>
+
+      <button type="submit" class="professional-btn">Create Account</button>
+    </form>
+
+    {% if google_enabled %}
+    <div class="auth-divider"><span>or</span></div>
+    <a class="google-button" href="{{ url_for('google_login') }}">
+      <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M21.35 12.27c0-.72-.06-1.41-.18-2.07H12v3.92h5.24a4.48 4.48 0 0 1-1.95 2.94v2.45h3.16c1.85-1.7 2.9-4.2 2.9-7.24Z"/>
+        <path fill="#34A853" d="M12 21.75c2.65 0 4.87-.88 6.49-2.39l-3.16-2.45c-.88.59-2 .94-3.33.94-2.56 0-4.73-1.73-5.51-4.05H3.22v2.53A9.8 9.8 0 0 0 12 21.75Z"/>
+        <path fill="#FBBC05" d="M6.49 13.8A5.9 5.9 0 0 1 6.18 12c0-.62.11-1.22.31-1.8V7.67H3.22A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05.97 4.33l3.27-2.53Z"/>
+        <path fill="#EA4335" d="M12 6.15c1.44 0 2.73.5 3.75 1.48l2.81-2.81C16.87 3.23 14.65 2.25 12 2.25a9.8 9.8 0 0 0-8.78 5.42l3.27 2.53C7.27 7.88 9.44 6.15 12 6.15Z"/>
+      </svg>
+      <span>Continue with Google</span>
+    </a>
+    {% endif %}
+
+    <div class="auth-footer">
+      <p>Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const password = document.getElementById("register-password");
+  const confirmPassword = document.getElementById("confirmPassword");
+  const message = document.getElementById("passwordMessage");
+  const submitBtn = document.querySelector(".professional-btn");
+
+  function checkPassword() {
+    if (!confirmPassword.value) {
+      confirmPassword.classList.remove("password-match", "password-mismatch");
+      message.textContent = "";
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const matches = password.value === confirmPassword.value;
+    confirmPassword.classList.toggle("password-match", matches);
+    confirmPassword.classList.toggle("password-mismatch", !matches);
+    message.textContent = matches ? "Passwords match" : "Passwords do not match";
+    message.classList.toggle("valid", matches);
+    message.classList.toggle("invalid", !matches);
+    submitBtn.disabled = !matches;
+  }
+
+  password.addEventListener("input", checkPassword);
+  confirmPassword.addEventListener("input", checkPassword);
+</script>
+{% endblock %}

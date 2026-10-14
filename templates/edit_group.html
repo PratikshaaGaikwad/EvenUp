@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ group.name }} - EvenUp{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a href="{{ url_for('group_detail', group_id=group.id) }}" class="back-link">← Back to group</a>
+  <div class="form-card">
+    <p class="eyebrow">GROUP SETTINGS</p>
+    <h1>Edit group</h1>
+    <p class="form-intro">Update the shared space details without changing its expense history.</p>
+
+    <form method="POST" class="stack-form">
+      <label for="group_name">Group name</label>
+      <input id="group_name" name="group_name" value="{{ group.name }}" maxlength="160" required />
+
+      <label for="group_type">Group type</label>
+      <select id="group_type" name="group_type">
+        {% for option in ['Trip', 'Home', 'Dinner', 'Project', 'Other'] %}
+        <option value="{{ option }}" {% if group.group_type == option %}selected{% endif %}>{{ option }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="currency">Currency</label>
+      <select id="currency" name="currency">
+        {% for code in ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD'] %}
+        <option value="{{ code }}" {% if group.currency == code %}selected{% endif %}>{{ code }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="4" maxlength="1000">{{ group.description or '' }}</textarea>
+
+      <div class="form-actions">
+        <a href="{{ url_for('group_detail', group_id=group.id) }}" class="button outline">Cancel</a>
+        <button type="submit" class="button dark">Save changes →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

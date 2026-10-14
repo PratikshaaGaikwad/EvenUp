@@ -1,0 +1,109 @@
+{% extends "base.html" %} {% block title %}Create group - EvenUp{% endblock %}
+{% block content %}
+<div class="auth-page-wrapper">
+  <div class="group-card">
+    <button type="button" id="closeGroupModal" class="close-group-modal">
+      ×
+    </button>
+
+    <div class="auth-title">
+      <p class="eyebrow">NEW SHARED SPACE</p>
+      <h2>Create a group</h2>
+      <p>Set up the basics now. Add members after the group is created.</p>
+    </div>
+
+    <form method="POST" id="createGroupForm">
+      <div class="floating-group">
+        <label for="groupName">Group name</label>
+
+        <input
+          id="groupName"
+          type="text"
+          name="group_name"
+          class="floating-input"
+          placeholder="Weekend in Porto"
+          required
+        />
+      </div>
+
+      <div class="form-row">
+        <div class="floating-group">
+          <label for="groupType">Type</label>
+
+          <select id="groupType" name="group_type" class="floating-input">
+            <option value="Trip">Trip</option>
+            <option value="Home">Home</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Event">Event</option>
+            <option value="Project">Project</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="floating-group">
+          <label for="currency">Currency</label>
+
+          <select id="currency" name="currency" class="floating-input">
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <option value="AUD">AUD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="floating-group">
+        <label for="description"> Description <span>optional</span> </label>
+
+        <textarea
+          id="description"
+          name="description"
+          class="floating-input"
+          rows="4"
+          maxlength="255"
+          placeholder="A short note about this shared space"
+        ></textarea>
+
+        <small id="descriptionCount">0 / 255</small>
+      </div>
+
+      <div class="create-actions">
+        <button type="button" id="cancelGroupButton" class="cancel-button">
+          Cancel
+        </button>
+
+        <button class="professional-btn" id="createGroupButton" type="submit">
+          Create group
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const closeGroupModal = document.getElementById("closeGroupModal");
+  const cancelGroupButton = document.getElementById("cancelGroupButton");
+  const createGroupForm = document.getElementById("createGroupForm");
+  const createGroupButton = document.getElementById("createGroupButton");
+  const description = document.getElementById("description");
+  const descriptionCount = document.getElementById("descriptionCount");
+
+  function returnToDashboard() {
+    window.location.href = "{{ url_for('dashboard') }}";
+  }
+
+  closeGroupModal.addEventListener("click", returnToDashboard);
+
+  cancelGroupButton.addEventListener("click", returnToDashboard);
+
+  description.addEventListener("input", () => {
+    descriptionCount.textContent = `${description.value.length} / 255`;
+  });
+
+  createGroupForm.addEventListener("submit", () => {
+    createGroupButton.disabled = true;
+    createGroupButton.textContent = "Creating group...";
+  });
+</script>
+{% endblock %}

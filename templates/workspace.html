@@ -1,0 +1,156 @@
+{% extends "base.html" %} {% block title %}{{ title }} - EvenUp{% endblock %} {%
+block content %}
+<div class="app-shell">
+  <aside>
+    <p class="side-label">WORKSPACE</p>
+    <a href="{{ url_for('dashboard') }}">Overview</a>
+    <a
+      class="{% if active == 'groups' %}side-active{% endif %}"
+      href="{{ url_for('groups') }}"
+      >Groups</a
+    >
+    <a
+      class="{% if active == 'expenses' %}side-active{% endif %}"
+      href="{{ url_for('expenses') }}"
+      >Expenses</a
+    >
+    <a
+      class="{% if active == 'insights' %}side-active{% endif %}"
+      href="{{ url_for('insights') }}"
+      >Insights</a
+    >
+    <div class="side-bottom">
+      <a href="{{ url_for('profile') }}" class="profile-link">
+        {% if current_user.avatar_url %}<img
+          src="{{ current_user.avatar_url }}"
+          class="user-avatar"
+          alt="{{ current_user.name }}"
+        />{% else %}<span class="user-dot">{{ current_user.name[0] }}</span>{%
+        endif %}
+        <div>
+          <b>{{ current_user.name }}</b
+          ><small>@{{ current_user.handle }}</small>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <p class="eyebrow">{{ eyebrow }}</p>
+    <header>
+      <div>
+        <h1>{{ title }}.</h1>
+        <p>Every shared plan and person in one place.</p>
+      </div>
+      {% if active == 'groups' %}
+      <a href="{{ url_for('create_group') }}" class="button dark"
+        >+ New group</a
+      >
+      {% endif %}
+    </header>
+
+    {% if active == 'groups' %}
+    <form
+      method="POST"
+      action="{{ url_for('group_actions') }}"
+      id="groupActionsForm"
+    >
+      <input type="hidden" name="group_id" id="selectedGroupId" />
+      <div class="group-actions-bar">
+        <span id="groupSelectionHint">Select a group to manage it</span>
+        <div class="group-actions-buttons">
+          <button
+            type="submit"
+            name="action"
+            value="edit"
+            class="button outline"
+            id="editGroupButton"
+            disabled
+          >
+            Edit group
+          </button>
+          <button
+            type="submit"
+            name="action"
+            value="delete"
+            class="button danger"
+            id="deleteGroupButton"
+            disabled
+            onclick="
+              return confirm(
+                'Delete the selected group and all of its expenses? This cannot be undone.',
+              );
+            "
+          >
+            Delete group
+          </button>
+        </div>
+      </div>
+
+      <section class="groups-grid">
+        {% if groups %} {% for group in groups %}
+        <article
+          class="group-card selectable-group-card"
+          data-group-id="{{ group.id }}"
+        >
+          <label class="group-select" aria-label="Select {{ group.name }}">
+            <input type="radio" name="group_selector" value="{{ group.id }}" />
+            <span></span>
+          </label>
+          <span class="space-icon">✦</span>
+          <p class="eyebrow">SHARED GROUP</p>
+          <h2>{{ group.name }}</h2>
+          <p class="group-members">
+            {{ group.member_count }} member{% if group.member_count != 1 %}s{%
+            endif %}
+          </p>
+          <a href="{{ url_for('group_detail', group_id=group.id) }}"
+            >Open group →</a
+          >
+        </article>
+        {% endfor %} {% else %}
+        <article class="no-groups-card">
+          <span class="space-icon">✦</span>
+          <h2>No shared spaces yet.</h2>
+          <p>
+            Create a group and invite friends using their unique EvenUp IDs.
+          </p>
+          <a href="{{ url_for('create_group') }}" class="button dark"
+            >Create your first group →</a
+          >
+        </article>
+        {% endif %}
+      </section>
+    </form>
+    {% else %}
+    <section class="no-groups-card">
+      <h2>This page is coming next.</h2>
+      <p>
+        Groups are already working. Expenses and insights will use those groups.
+      </p>
+      <a href="{{ url_for('groups') }}" class="button dark">View groups →</a>
+    </section>
+    {% endif %}
+  </main>
+</div>
+{% endblock %} {% block scripts %} {% if active == 'groups' %}
+<script>
+  const selectedGroupId = document.getElementById("selectedGroupId");
+  const hint = document.getElementById("groupSelectionHint");
+  const editButton = document.getElementById("editGroupButton");
+  const deleteButton = document.getElementById("deleteGroupButton");
+
+  document.querySelectorAll('input[name="group_selector"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      selectedGroupId.value = radio.value;
+      editButton.disabled = false;
+      deleteButton.disabled = false;
+      hint.textContent = "1 group selected";
+      document
+        .querySelectorAll(".selectable-group-card")
+        .forEach((card) => card.classList.remove("is-selected"));
+      radio.closest(".selectable-group-card").classList.add("is-selected");
+    });
+  });
+</script>
+{% endif %} {% endblock %}

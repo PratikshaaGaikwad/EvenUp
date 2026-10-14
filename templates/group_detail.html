@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }} - EvenUp{% endblock %}
+{% block content %}
+<div class="group-page">
+  <a href="{{ url_for('groups') }}" class="back-link">← All groups</a>
+
+  <header class="group-header">
+    <div>
+      <p class="eyebrow">{{ group.group_type }} · {{ group.currency }}</p>
+      <h1>{{ group.name }}</h1>
+      <p class="group-description">{{ group.description or "No description added yet." }}</p>
+    </div>
+    <div class="group-actions">
+      <button type="button" class="button lime" id="openExpenseModal">+ Add expense</button>
+      <button type="button" class="button outline" id="openMemberModal">+ Add member</button>
+    </div>
+  </header>
+
+  <section class="group-detail-grid">
+    <article class="members-panel">
+      <p class="eyebrow">PEOPLE IN THIS SPACE</p>
+      <h2>{{ members|length }} member{% if members|length != 1 %}s{% endif %}</h2>
+      <div class="member-items">
+        {% for member in members %}
+        <div class="member-item">
+          {% if member.avatar_url %}
+          <img src="{{ member.avatar_url }}" alt="{{ member.name }}" />
+          {% else %}
+          <span class="member-initial">{{ member.name[0] }}</span>
+          {% endif %}
+          <div class="member-info">
+            <strong>{{ member.name }}</strong>
+            <small>@{{ member.handle }}</small>
+          </div>
+          {% if member.id == current_user.id %}
+          <span class="online-status"><i></i> Online</span>
+          {% else %}
+          <span class="offline-status">Offline</span>
+          {% endif %}
+          <span class="member-role">{{ member.role }}</span>
+          {% if group.created_by == current_user.id and member.id != group.created_by %}
+          <form method="POST" action="{{ url_for('remove_group_member', group_id=group.id, user_id=member.id) }}" class="member-remove-form">
+            <button type="submit" class="icon-action danger-text" title="Remove member" aria-label="Remove member" onclick="return confirm('Remove this member from the group?')">×</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="conversation-panel">
+      <div class="conversation-header">
+        <div>
+          <p class="eyebrow light">GROUP CONVERSATION</p>
+          <h2>Keep the context together.</h2>
+        </div>
+        <span class="chat-icon">◌</span>
+      </div>
+      <div class="messages" id="messages">
+        {% if messages %}
+          {% for message in messages %}
+          <div class="message-item">
+            {% if message.avatar_url %}
+            <img src="{{ message.avatar_url }}" alt="{{ message.name }}" />
+            {% else %}
+            <span class="message-initial">{{ message.name[0] }}</span>
+            {% endif %}
+            <div>
+              <strong>{{ message.name }} <small>@{{ message.handle }}</small></strong>
+              <p>{{ message.message }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div class="empty-chat">
+          <div class="chat-empty-icon">◌</div>
+          <strong>No messages yet</strong>
+          <p>Start the conversation around your shared plans and expenses.</p>
+        </div>
+        {% endif %}
+      </div>
+      <form method="POST" action="{{ url_for('add_message', group_id=group.id) }}" class="message-form">
+        <input type="text" name="message" maxlength="500" placeholder="Write a message..." required />
+        <button type="submit">Send</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="summary-grid">
+    <article class="recent-expenses-card">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">RECENT EXPENSES</p>
+          <h2>What the group spent</h2>
+        </div>
+        <button type="button" class="text-button" id="openExpenseModal2">Add expense +</button>
+      </div>
+
+      {% if expenses %}
+      <div class="expense-list">
+        {% for expense in expenses %}
+        <div class="expense-item expense-item-manageable">
+          <div class="expense-icon">₹</div>
+          <div class="expense-info">
+            <strong>{{ expense.description }}</strong>
+            <small>
+              {{ expense.category }} · {{ expense.split_type|capitalize }} split · Paid by {{ expense.payer_name }}
+              {% if expense.receipt_path %} · <a href="{{ expense.receipt_path }}" target="_blank" rel="noopener">Receipt</a>{% endif %}
+            </small>
+          </div>
+          <div class="expense-amount">{{ group.currency }} {{ '%.2f'|format(expense.amount) }}</div>
+
+          {% if group.created_by == current_user.id or expense.paid_by == current_user.id %}
+          <details class="expense-actions">
+            <summary aria-label="Manage expense">⋯</summary>
+            <div class="expense-action-menu">
+              <form method="POST" action="{{ url_for('edit_expense', group_id=group.id, expense_id=expense.id) }}" class="inline-expense-form">
+                <input type="text" name="description" value="{{ expense.description }}" required aria-label="Expense description" />
+                <input type="number" name="amount" value="{{ '%.2f'|format(expense.amount) }}" min="0.01" step="0.01" required aria-label="Expense amount" />
+                <select name="category" aria-label="Expense category">
+                  {% for option in ['Food', 'Travel', 'Home', 'Entertainment', 'Shopping', 'Other'] %}
+                  <option value="{{ option }}"{% if expense.category == option %} selected{% endif %}>{{ option }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="button dark small-button">Save changes</button>
+              </form>
+              <form method="POST" action="{{ url_for('delete_expense', group_id=group.id, expense_id=expense.id) }}">
+                <button type="submit" class="menu-delete" onclick="return confirm('Delete this expense and recalculate balances?')">Delete expense</button>
+              </form>
+            </div>
+          </details>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-card">
+        <strong>No expenses yet</strong>
+        <p>Add the first shared cost to calculate everyone’s balance.</p>
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="balances-card">
+      <p class="eyebrow light">GROUP BALANCES</p>
+      <h2>Who paid and who owes.</h2>
+      <div class="balance-list">
+        {% for member in balances %}
+        <div class="balance-item">
+          <span>{{ member.name }}</span>
+          {% if member.balance > 0 %}
+          <strong class="receives">Receives {{ group.currency }} {{ '%.2f'|format(member.balance) }}</strong>
+          {% elif member.balance < 0 %}
+          <strong class="owes">Owes {{ group.currency }} {{ '%.2f'|format(-member.balance) }}</strong>
+          {% else %}
+          <strong class="settled">All even</strong>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="settlement-card">
+    <div>
+      <p class="eyebrow">SETTLEMENT PLAN</p>
+      <h2>The simplest way to settle up.</h2>
+    </div>
+    {% if settlements %}
+    <div class="settlement-list">
+      {% for settlement in settlements %}
+      <div class="settlement-item">
+        <span><b>{{ settlement.from_name }}</b> pays <b>{{ settlement.to_name }}</b></span>
+        <strong>{{ group.currency }} {{ '%.2f'|format(settlement.amount) }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="all-settled">✓ Everyone is settled up.</div>
+    {% endif %}
+  </section>
+</div>
+
+<div class="modal-backdrop" id="memberModal">
+  <div class="feature-modal">
+    <button type="button" class="modal-close" data-close="memberModal">×</button>
+    <p class="eyebrow">ADD A MEMBER</p>
+    <h2>Invite by EvenUp ID</h2>
+    <p>Enter your friend’s unique ID. They must already have an EvenUp account.</p>
+    <form method="POST" action="{{ url_for('add_group_member', group_id=group.id) }}">
+      <input type="text" name="handle" placeholder="@friend_id" required />
+      <button type="submit" class="button dark">Add member →</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="expenseModal">
+  <div class="feature-modal expense-feature-modal">
+    <button type="button" class="modal-close" data-close="expenseModal">×</button>
+    <p class="eyebrow">NEW EXPENSE</p>
+    <h2>Split a shared cost</h2>
+    <p>Choose a simple split or itemize a receipt so everyone pays only for what they ordered.</p>
+
+    <form method="POST" action="{{ url_for('add_expense', group_id=group.id) }}" enctype="multipart/form-data" id="expenseForm" data-members='{{ members|map(attribute="id")|list|tojson }}'>
+      <label for="expenseDescription">Expense title</label>
+      <input id="expenseDescription" type="text" name="description" placeholder="Dinner at a restaurant" required />
+
+      <div class="modal-form-row">
+        <div>
+          <label for="expenseCategory">Category</label>
+          <select id="expenseCategory" name="category">
+            <option value="Food">Food</option>
+            <option value="Travel">Travel</option>
+            <option value="Home">Home</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="paidBy">Paid by</label>
+          <select id="paidBy" name="paid_by">
+            {% for member in members %}
+            <option value="{{ member.id }}"{% if member.id == current_user.id %} selected{% endif %}>{{ member.name }}{% if member.id == current_user.id %} (you){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <label for="splitType">How should it be split?</label>
+      <select name="split_type" id="splitType">
+        <option value="equal">Equal — everyone in the group</option>
+        <option value="selected">Selected people only</option>
+        <option value="custom">Custom receipt / itemized split</option>
+      </select>
+
+      <div class="split-members" id="splitMembers">
+        <p class="field-hint">Select who shares this expense.</p>
+        {% for member in members %}
+        <label><input type="checkbox" name="split_members" value="{{ member.id }}" checked /> {{ member.name }}</label>
+        {% endfor %}
+      </div>
+
+      <div class="custom-split-panel" id="customSplitPanel" hidden>
+        <div class="custom-split-header">
+          <div>
+            <p class="eyebrow">COST ANALYZER</p>
+            <h3>Itemize the receipt</h3>
+          </div>
+          <button type="button" class="button outline small-button" id="addReceiptItem">+ Add item</button>
+        </div>
+        <p class="field-hint">Add each food or product, then choose who ordered it. Multiple people can share one item.</p>
+        <div id="receiptItems"></div>
+        <div class="modal-form-row receipt-extras">
+          <div>
+            <label for="extraAmount">Tax / tip / delivery</label>
+            <input id="extraAmount" name="extra_amount" type="number" min="0" step="0.01" value="0" />
+          </div>
+          <div class="analyzer-total">
+            <span>Calculated total</span>
+            <strong id="analyzerTotal">₹0.00</strong>
+          </div>
+        </div>
+        <input type="hidden" name="amount" id="customAmount" value="0" />
+        <input type="hidden" name="items_json" id="itemsJson" value="[]" />
+      </div>
+
+      <div id="simpleAmountField">
+        <label for="expenseAmount">Total amount</label>
+        <input id="expenseAmount" type="number" name="simple_amount" min="0.01" step="0.01" placeholder="0.00" required />
+      </div>
+
+      <label for="receiptFile">Receipt image <span class="optional-label">optional</span></label>
+      <input id="receiptFile" type="file" name="receipt_file" accept="image/png,image/jpeg,image/gif,image/webp" />
+
+      <button type="submit" class="button dark" id="saveExpenseButton">Save and split equally →</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const memberModal = document.getElementById("memberModal");
+    const expenseModal = document.getElementById("expenseModal");
+    const openMemberModal = document.getElementById("openMemberModal");
+    const openExpenseModal = document.getElementById("openExpenseModal");
+    const openExpenseModal2 = document.getElementById("openExpenseModal2");
+    const splitType = document.getElementById("splitType");
+    const splitMembers = document.getElementById("splitMembers");
+    const customPanel = document.getElementById("customSplitPanel");
+    const simpleAmountField = document.getElementById("simpleAmountField");
+    const simpleAmount = document.getElementById("expenseAmount");
+    const customAmount = document.getElementById("customAmount");
+    const itemsJson = document.getElementById("itemsJson");
+    const receiptItems = document.getElementById("receiptItems");
+    const extraAmount = document.getElementById("extraAmount");
+    const analyzerTotal = document.getElementById("analyzerTotal");
+    const saveExpenseButton = document.getElementById("saveExpenseButton");
+    let itemCounter = 0;
+
+    const openModal = (modal) => {
+      if (modal) modal.classList.add("open");
+    };
+    if (openMemberModal) openMemberModal.addEventListener("click", () => openModal(memberModal));
+    if (openExpenseModal) openExpenseModal.addEventListener("click", () => openModal(expenseModal));
+    if (openExpenseModal2) openExpenseModal2.addEventListener("click", () => openModal(expenseModal));
+
+    document.querySelectorAll(".modal-close").forEach((button) => {
+      button.addEventListener("click", () => {
+        const modal = document.getElementById(button.dataset.close);
+        if (modal) modal.classList.remove("open");
+      });
+    });
+    document.querySelectorAll(".modal-backdrop").forEach((modal) => {
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) modal.classList.remove("open");
+      });
+    });
+
+    const members = JSON.parse(document.getElementById("expenseForm")?.dataset.members || "[]").map((id) => {
+      const label = document.querySelector(`#splitMembers input[value="${id}"]`)?.parentElement?.textContent?.trim() || "Member";
+      return { id: Number(id), name: label };
+    });
+
+    const updateSplitMode = () => {
+      const custom = splitType && splitType.value === "custom";
+      const selected = splitType && splitType.value === "selected";
+      if (splitMembers) {
+        splitMembers.hidden = custom || !selected;
+        splitMembers.classList.toggle("visible", selected && !custom);
+      }
+      if (customPanel) customPanel.hidden = !custom;
+      if (simpleAmountField) simpleAmountField.hidden = custom;
+      if (simpleAmount) simpleAmount.required = !custom;
+      if (custom && !receiptItems.children.length) addItem();
+      if (saveExpenseButton) {
+        saveExpenseButton.textContent = custom
+          ? "Analyze and save split →"
+          : selected
+            ? "Save selected split →"
+            : "Save and split equally →";
+      }
+    };
+
+    const calculateItems = () => {
+      const items = Array.from(receiptItems.querySelectorAll(".receipt-item-row")).map((row) => {
+        const chosen = Array.from(row.querySelectorAll("input[data-member-id]:checked"));
+        return {
+          name: row.querySelector("[data-item-name]").value.trim(),
+          amount: Number(row.querySelector("[data-item-amount]").value || 0),
+          members: chosen.map((input) => Number(input.dataset.memberId))
+        };
+      }).filter((item) => item.name || item.amount || item.members.length);
+      const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const extras = Number(extraAmount.value || 0);
+      const total = subtotal + extras;
+      analyzerTotal.textContent = `₹${total.toFixed(2)}`;
+      customAmount.value = total.toFixed(2);
+      itemsJson.value = JSON.stringify(items);
+      return { items, total };
+    };
+
+    function addItem() {
+      itemCounter += 1;
+      const row = document.createElement("div");
+      row.className = "receipt-item-row";
+      row.dataset.itemId = itemCounter;
+      row.innerHTML = `
+        <div class="receipt-item-fields">
+          <input type="text" data-item-name placeholder="Item name e.g. Paneer tikka" aria-label="Item name" />
+          <input type="number" data-item-amount min="0.01" step="0.01" placeholder="Amount" aria-label="Item amount" />
+          <button type="button" class="remove-receipt-item" aria-label="Remove item">×</button>
+        </div>
+        <div class="receipt-assignees">
+          <span>Ordered by</span>
+          ${members.map((member) => `<label><input type="checkbox" data-member-id="${member.id}" /> ${member.name}</label>`).join("")}
+        </div>`;
+      receiptItems.appendChild(row);
+      row.querySelectorAll("input").forEach((input) => input.addEventListener("input", calculateItems));
+      row.querySelectorAll("input[type=checkbox]").forEach((input) => input.addEventListener("change", calculateItems));
+      row.querySelector(".remove-receipt-item").addEventListener("click", () => { row.remove(); calculateItems(); });
+      calculateItems();
+    }
+
+    document.getElementById("addReceiptItem")?.addEventListener("click", addItem);
+    splitType?.addEventListener("change", updateSplitMode);
+    extraAmount?.addEventListener("input", calculateItems);
+    document.getElementById("expenseForm")?.addEventListener("submit", (event) => {
+      if (splitType.value !== "custom") return;
+      const result = calculateItems();
+      const valid = result.items.length > 0 && result.items.every((item) => item.name && item.amount > 0 && item.members.length > 0);
+      if (!valid) {
+        event.preventDefault();
+        alert("Add every item with an amount and at least one person who ordered it.");
+      }
+    });
+
+    const messages = document.getElementById("messages");
+    if (messages) messages.scrollTop = messages.scrollHeight;
+    updateSplitMode();
+  })();
+</script>
+{% endblock %}

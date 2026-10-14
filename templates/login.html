@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Login - EvenUp{% endblock %}
+
+{% block content %}
+<div class="auth-page-wrapper">
+  <div class="glass-card auth-card">
+    <div class="auth-logo">
+      <img
+        class="auth-brand-mark"
+        width="88"
+        height="88"
+        src="{{ url_for('static', filename='assets/evenup-logo-v5.png', v='6') }}"
+        alt="EvenUp logo"
+        onerror="this.style.display='none'; this.nextElementSibling.classList.add('logo-fallback-visible')"
+      />
+      <div class="logo-fallback" aria-hidden="true">E</div>
+      <h1>EVENUP</h1>
+      <p>Split Fairly. Settle Instantly.</p>
+    </div>
+
+    <div class="auth-title">
+      <h2>Welcome Back</h2>
+      <p>Log in to continue splitting expenses</p>
+    </div>
+
+    <form method="POST" class="auth-form">
+      <div class="floating-group">
+        <label for="login-email">Email address</label>
+        <input id="login-email" type="email" name="email" class="floating-input" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+
+      <div class="floating-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" name="password" class="floating-input" placeholder="Enter your password" autocomplete="current-password" required />
+      </div>
+
+      <button type="submit" class="professional-btn">Sign In</button>
+    </form>
+
+    {% if google_enabled %}
+    <div class="auth-divider"><span>or</span></div>
+    <a class="google-button" href="{{ url_for('google_login') }}">
+      <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#4285F4" d="M21.35 12.27c0-.72-.06-1.41-.18-2.07H12v3.92h5.24a4.48 4.48 0 0 1-1.95 2.94v2.45h3.16c1.85-1.7 2.9-4.2 2.9-7.24Z"/>
+        <path fill="#34A853" d="M12 21.75c2.65 0 4.87-.88 6.49-2.39l-3.16-2.45c-.88.59-2 .94-3.33.94-2.56 0-4.73-1.73-5.51-4.05H3.22v2.53A9.8 9.8 0 0 0 12 21.75Z"/>
+        <path fill="#FBBC05" d="M6.49 13.8A5.9 5.9 0 0 1 6.18 12c0-.62.11-1.22.31-1.8V7.67H3.22A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05.97 4.33l3.27-2.53Z"/>
+        <path fill="#EA4335" d="M12 6.15c1.44 0 2.73.5 3.75 1.48l2.81-2.81C16.87 3.23 14.65 2.25 12 2.25a9.8 9.8 0 0 0-8.78 5.42l3.27 2.53C7.27 7.88 9.44 6.15 12 6.15Z"/>
+      </svg>
+      <span>Continue with Google</span>
+    </a>
+    {% endif %}
+
+    <div class="auth-footer">
+      <p>New to EvenUp? <a href="{{ url_for('register') }}">Create account</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

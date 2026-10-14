@@ -1,0 +1,136 @@
+{% extends "base.html" %} {% block title %}Workspace - EvenUp{% endblock %} {%
+block content %}
+<div class="app-shell">
+  <aside>
+    <p class="side-label">WORKSPACE</p>
+
+    <a class="side-active" href="{{ url_for('dashboard') }}"> Overview </a>
+
+    <a href="{{ url_for('groups') }}">Groups</a>
+    <a href="{{ url_for('expenses') }}"> Expenses </a>
+
+    <a href="{{ url_for('insights') }}"> Insights </a>
+
+    <div class="side-bottom">
+      <a href="{{ url_for('profile') }}" class="profile-link">
+        {% if current_user.avatar_url %}
+        <img
+          src="{{ current_user.avatar_url }}"
+          class="user-avatar"
+          alt="{{ current_user.name }}"
+        />
+        {% else %}
+        <span class="user-dot">{{ current_user.name[0] }}</span>
+        {% endif %}
+
+        <div>
+          <b>{{ current_user.name }}</b>
+          <small>@{{ current_user.handle }}</small>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <main class="workspace">
+    <header>
+      <div>
+        <p class="eyebrow">YOUR WORKSPACE</p>
+        <h1>Good to see you, {{ current_user.name.split(' ')[0] }}.</h1>
+        <p>Your shared-spending overview, all in one calm place.</p>
+      </div>
+
+      <a href="{{ url_for('create_group') }}" class="button dark">
+        + New group
+      </a>
+    </header>
+
+    <section class="metric-grid">
+      <article>
+        <span>Active groups</span>
+        <strong>{{ groups|length }}</strong>
+        <small>Your shared spaces</small>
+      </article>
+
+      <article>
+        <span>You owe</span>
+        <strong>₹{{ '%.2f'|format(summary.owes) }}</strong>
+        <small>Across your active groups</small>
+      </article>
+
+      <article>
+        <span>You receive</span>
+        <strong>₹{{ '%.2f'|format(summary.receives) }}</strong>
+        <small>Across your active groups</small>
+      </article>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="spaces">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">YOUR GROUPS</p>
+            <h2>Shared spaces</h2>
+          </div>
+
+          <a href="{{ url_for('groups') }}">View all →</a>
+        </div>
+
+        <div class="space-list">
+          {% if groups %} {% for group in groups[:3] %}
+          <div>
+            <span class="space-icon">✦</span>
+
+            <p>
+              <b>{{ group.name }}</b>
+              <small
+                >{{ group.member_count }} member{% if group.member_count != 1
+                %}s{% endif %}</small
+              >
+            </p>
+
+            <strong class="positive">Open group</strong>
+            <a href="{{ url_for('group_detail', group_id=group.id) }}">→</a>
+          </div>
+          {% endfor %} {% else %}
+          <div class="empty-groups">
+            <p>
+              <b>No groups yet</b>
+              <small
+                >Create your first group and invite friends using their EvenUp
+                IDs.</small
+              >
+            </p>
+
+            <a href="{{ url_for('create_group') }}" class="button lime">
+              Create group →
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+
+      <article class="insight-card">
+        <p class="eyebrow light">EVENUP INSIGHT</p>
+
+        {% if groups %}
+        <h2>
+          You have {{ groups|length }} active group{% if groups|length != 1
+          %}s{% endif %}.
+        </h2>
+        <p>
+          Add your first expense to begin tracking shared spending and balances.
+        </p>
+        {% else %}
+        <h2>Clarity starts with one group.</h2>
+        <p>
+          Create a group, invite friends, and keep every shared cost in one
+          place.
+        </p>
+        {% endif %}
+
+        <div class="progress"><i></i></div>
+      </article>
+    </section>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %} {% block content %}
+<div class="auth-page-wrapper">
+  <div class="glass-card">
+    <div class="auth-title">
+      <h2>Claim your EvenUp ID</h2>
+      <p>Your unique ID lets friends add you to groups.</p>
+    </div>
+
+    <form method="POST">
+      <div class="floating-group">
+        <input
+          name="handle"
+          class="floating-input"
+          placeholder="e.g. alex_01"
+          minlength="3"
+          maxlength="30"
+          required
+        />
+      </div>
+      <button class="professional-btn" type="submit">Claim my ID</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

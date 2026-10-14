@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}EvenUp{% endblock %}</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="{{ url_for('static', filename='assets/evenup-logo-v5.png') }}"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    {% block nav %}
+    <nav class="nav">
+      <a href="{{ url_for('home') }}" class="brand"
+        ><img
+          class="brand-mark"
+          width="28"
+          height="28"
+          src="{{ url_for('static', filename='assets/evenup-logo-v5.png') }}"
+          alt=""
+        /><span>EvenUp</span></a
+      >
+      <div class="nav-links">
+        {% if session.user_id %}<a href="{{ url_for('home') }}">Home</a
+        ><a href="{{ url_for('dashboard') }}">Workspace</a
+        ><a href="{{ url_for('logout') }}" class="nav-cta">Sign out</a>{% else
+        %}<a href="{{ url_for('login') }}">Sign in</a
+        ><a href="{{ url_for('register') }}" class="nav-cta"
+          >Get started <b>↗</b></a
+        >{% endif %}
+      </div>
+    </nav>
+    {% endblock %}
+    <div class="flash-container">
+      {% with messages = get_flashed_messages(with_categories=true) %}{% for
+      category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}{% endwith %}
+    </div>
+    {% block content %}{% endblock %} {% block scripts %}{% endblock %}
+  </body>
+</html>

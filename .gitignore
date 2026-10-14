@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+instance/
+.env
+EvenUp_Shared_Expense_Splitter_and_Cost_Analyzer.docx
+*.db
+
+static/uploads/

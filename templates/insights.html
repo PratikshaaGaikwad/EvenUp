@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Insights - EvenUp{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+  <aside>
+    <p class="side-label">WORKSPACE</p>
+    <a href="{{ url_for('dashboard') }}">Overview</a>
+    <a href="{{ url_for('groups') }}">Groups</a>
+    <a href="{{ url_for('expenses') }}">Expenses</a>
+    <a class="side-active" href="{{ url_for('insights') }}">Insights</a>
+
+    <div class="side-bottom">
+      <a href="{{ url_for('profile') }}" class="profile-link">
+        {% if current_user.avatar_url %}
+        <img src="{{ current_user.avatar_url }}" class="user-avatar" alt="{{ current_user.name }}" />
+        {% else %}
+        <span class="user-dot">{{ current_user.name[0] }}</span>
+        {% endif %}
+        <div>
+          <b>{{ current_user.name }}</b>
+          <small>@{{ current_user.handle }}</small>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <main
+    class="workspace"
+    id="insightsPage"
+    data-category-labels='{{ categories|map(attribute="category")|list|tojson }}'
+    data-category-values='{{ categories|map(attribute="total")|map("float")|list|tojson }}'
+    data-month-labels='{{ monthly|map(attribute="month_label")|list|tojson }}'
+    data-month-values='{{ monthly|map(attribute="total")|map("float")|list|tojson }}'
+  >
+    <p class="eyebrow">INSIGHTS</p>
+
+    <header>
+      <div>
+        <h1>Spend with context.</h1>
+        <p>See the patterns behind shared costs before they become a blur.</p>
+      </div>
+      <div class="export-actions">
+        <button class="button outline" type="button" onclick="window.print()">Export PDF</button>
+        <button class="button lime" type="button" onclick="exportInsightsPNG()">Export PNG</button>
+      </div>
+    </header>
+
+    <section class="insight-stats" aria-label="Insight summary">
+      <article>
+        <span>Total tracked</span>
+        <strong>₹{{ '%.2f'|format(total|float) }}</strong>
+        <small>Across all your groups</small>
+      </article>
+      <article>
+        <span>Top category</span>
+        <strong>{{ categories[0].category if categories else '—' }}</strong>
+        <small>{% if categories %}₹{{ '%.2f'|format(categories[0].total|float) }} tracked{% else %}Add an expense to begin{% endif %}</small>
+      </article>
+      <article>
+        <span>Active groups</span>
+        <strong>{{ groups_spend|length }}</strong>
+        <small>With shared costs</small>
+      </article>
+    </section>
+
+    <section class="analytics-grid" id="insightsReport" aria-label="Spending analytics">
+      <article class="chart-card chart-wide">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">SPENDING TREND</p>
+            <h2>Monthly momentum</h2>
+          </div>
+          <span class="chart-note">Last 6 months</span>
+        </div>
+        <div class="chart-wrap"><canvas id="monthlyChart" aria-label="Monthly spending chart"></canvas></div>
+      </article>
+
+      <article class="chart-card">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">CATEGORY MIX</p>
+            <h2>Where it goes</h2>
+          </div>
+        </div>
+        <div class="chart-wrap donut-wrap"><canvas id="categoryChart" aria-label="Category spending chart"></canvas></div>
+      </article>
+
+    </section>
+
+
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  const ink = "#14211d";
+  const lime = "#b6db55";
+  const coral = "#bf725c";
+  const teal = "#75a9a0";
+  const peach = "#e7ad78";
+
+  const insightsPage = document.getElementById("insightsPage");
+  const readData = (name) => JSON.parse(insightsPage?.dataset[name] || "[]");
+  const categoryLabels = readData("categoryLabels");
+  const categoryValues = readData("categoryValues").map(Number);
+  const monthLabels = readData("monthLabels");
+  const monthValues = readData("monthValues").map(Number);
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: { usePointStyle: true, padding: 18, font: { family: "DM Sans" } }
+      },
+      tooltip: {
+        callbacks: { label: (context) => ` ₹${Number(context.raw || 0).toFixed(2)}` }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { family: "DM Sans" } } },
+      y: {
+        beginAtZero: true,
+        grid: { color: "#edf0e9" },
+        ticks: { font: { family: "DM Sans" }, callback: (value) => `₹${value}` }
+      }
+    }
+  };
+
+  function createChart(canvasId, config) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === "undefined") return null;
+    return new Chart(canvas, config);
+  }
+
+  createChart("monthlyChart", {
+    type: "line",
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: "Spend",
+        data: monthValues,
+        borderColor: ink,
+        backgroundColor: "rgba(182, 219, 85, .25)",
+        fill: true,
+        tension: 0.38,
+        pointBackgroundColor: lime,
+        pointBorderColor: ink,
+        pointRadius: 4
+      }]
+    },
+    options: chartOptions
+  });
+
+  createChart("categoryChart", {
+    type: "doughnut",
+    data: {
+      labels: categoryLabels,
+      datasets: [{
+        data: categoryValues,
+        backgroundColor: [lime, teal, peach, coral, "#8b9ed0", "#d4b6db"],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { usePointStyle: true, padding: 14, font: { family: "DM Sans", size: 11 } }
+        },
+        tooltip: {
+          callbacks: { label: (context) => ` ₹${Number(context.raw || 0).toFixed(2)}` }
+        }
+      }
+    }
+  });
+
+
+
+  async function exportInsightsPNG() {
+    const report = document.getElementById("insightsReport");
+    if (!report || typeof html2canvas === "undefined") return;
+    const canvas = await html2canvas(report, { backgroundColor: "#f3f4ed", scale: 2, useCORS: true });
+    const link = document.createElement("a");
+    link.download = "evenup-insights.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+</script>
+{% endblock %}

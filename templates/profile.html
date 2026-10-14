@@ -1,0 +1,90 @@
+{% extends "base.html" %} {% block title %}Profile - EvenUp{% endblock %} {%
+block content %}
+<div class="auth-page-wrapper">
+  <div class="glass-card profile-card">
+    <div class="auth-title">
+      <h2>Your profile</h2>
+      <p>Edit the details your groups can see.</p>
+    </div>
+
+    <div class="profile-preview">
+      {% if user.avatar_url %}
+      <img src="{{ user.avatar_url }}" alt="Profile picture" />
+      {% else %}
+      <div class="profile-initial">{{ user.name[0] }}</div>
+      {% endif %}
+
+      <div>
+        <strong>{{ user.name }}</strong>
+        <small>@{{ user.handle }}</small>
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="floating-group">
+        <input
+          type="text"
+          name="name"
+          class="floating-input"
+          value="{{ user.name }}"
+          placeholder="Your name"
+          required
+        />
+      </div>
+
+      <div class="floating-group">
+        <input
+          type="email"
+          name="email"
+          class="floating-input"
+          value="{{ user.email }}"
+          placeholder="Email address"
+          required
+        />
+      </div>
+
+      <div class="floating-group">
+        <select name="gender" class="floating-input">
+          <option value="">Select gender</option>
+          <option value="Woman">Woman</option>
+          <option value="Man">Man</option>
+          <option value="Non-binary">Non-binary</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
+
+      <div class="floating-group">
+        <input
+          type="url"
+          name="avatar_url"
+          class="floating-input"
+          value="{{ user.avatar_url or '' }}"
+          placeholder="Profile picture URL - optional"
+        />
+        <div class="floating-group">
+          <input
+            type="file"
+            name="avatar_file"
+            class="floating-input"
+            accept=".png,.jpg,.jpeg,.gif,.webp"
+          />
+        </div>
+      </div>
+
+      <div class="floating-group">
+        <textarea
+          name="bio"
+          class="floating-input"
+          placeholder="Tell your groups a little about yourself"
+          maxlength="250"
+          rows="4"
+        >
+{{ user.bio or '' }}</textarea
+        >
+      </div>
+
+      <button class="professional-btn" type="submit">Save profile</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
